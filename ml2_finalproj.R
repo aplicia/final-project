@@ -1,3 +1,11 @@
+# TODO
+# Tuning procedures
+# Investigate possible transformations
+# You must evaluate the predictive performance of the competing methods using the held-
+# out test set. Use appropriate regression criteria such as test MSE, RMSE, MAE, or other justified measures.
+
+
+
 dat <- read.csv('booking.csv')
 # Remove booking ID and date of reservation
 hotel_data <- subset(dat, select = -c(Booking_ID, date.of.reservation))
@@ -22,6 +30,7 @@ test_data  <- hotel_data[-train_indices, ]
 
 
 # Random Forest
+# Used ranger instead of randomForest for faster iterations
 library(ranger)
 
 rf_mod <- ranger(booking.status ~ ., 
