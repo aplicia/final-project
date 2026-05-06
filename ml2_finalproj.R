@@ -37,17 +37,35 @@ rf_mod <- ranger(booking.status ~ .,
                  data = train_data, 
                  num.trees = 500,
                  importance = "impurity",
-                 classification = TRUE)
+                 probability = T)
 
 print(rf_mod)
-
+# Gini Index
 importance_scores <- sort(rf_mod$variable.importance, decreasing = TRUE)
 print(importance_scores)
 barplot(importance_scores, las = 2, main = "Variable Importance (RF)")
 
 rf_preds <- predict(rf_mod, data = test_data)$predictions
-mean(rf_preds != test_data$booking.status)
+# mean(rf_preds != test_data$booking.status)
 
+# Define the range of mtry to test (e.g., from 1 to 10)
+# mtry_values <- seq(1, 10, by = 1)
+# oob_errors <- numeric(length(mtry_values))
+# 
+# for (i in seq_along(mtry_values)) {
+#   temp_mod <- ranger(booking.status ~ ., 
+#                      data = train_data, 
+#                      mtry = mtry_values[i],
+#                      num.trees = 500)
+#   
+#   # Record the OOB prediction error
+#   oob_errors[i] <- temp_mod$prediction.error
+# }
+# 
+# # Find the best mtry
+# best_mtry <- mtry_values[which.min(oob_errors)]
+# plot(mtry_values, oob_errors, type = "b", pch = 19, col = "blue",
+#      main = "Tuning mtry via OOB Error")
 # Elastic Net
 
 X <- model.matrix(booking.status ~ ., data = hotel_data)[, -1]
@@ -66,29 +84,39 @@ en_preds <- predict(fit_stable, newx = X_test, s = "lambda.min", type = "class")
 # Convert to factor
 en_preds <- factor(en_preds, levels = levels(y_test))
 mean(en_preds != y_test)
+# Plotting the coefficients against the L1 Norm (penalty)
+# Extract coefficients at lambda.min
+final_coefs <- coef(fit_stable, s = "lambda.min")
+print(final_coefs)
 
-# GAM
-gam_mod <- gam(booking.status ~ s(lead.time) + s(average.price) + 
-                 type.of.meal + market.segment.type + special.requests, 
-               data = train_data, 
-               family = "binomial")
+# # GAM
+# gam_mod <- gam(booking.status ~ s(lead.time) + s(average.price) + 
+#                  type.of.meal + market.segment.type + special.requests, 
+#                data = train_data, 
+#                family = "binomial")
+# 
+# 
+# 
+# summary(gam_mod)
+# 
+# plot(gam_mod, pages = 1)
+# 
+# 
+# gam_probs <- predict(gam_mod, newdata = test_data, type = "response")
+# 
+# gam_preds <- ifelse(gam_probs > 0.5, "Canceled", "Not_Canceled")
+# gam_preds <- factor(gam_preds, levels = levels(test_data$booking.status))
+# 
+# mean(gam_preds != test_data$booking.status)
 
+library(ggplot2)
 
-
-summary(gam_mod)
-
-plot(gam_mod, pages = 1)
-
-
-gam_probs <- predict(gam_mod, newdata = test_data, type = "response")
-
-gam_preds <- ifelse(gam_probs > 0.5, "Canceled", "Not_Canceled")
-gam_preds <- factor(gam_preds, levels = levels(test_data$booking.status))
-
-mean(gam_preds != test_data$booking.status)
-
-
-
-
+# Boxplot for Lead Time vs Booking Status
+# Plot histograms for your main numeric variables
+par(mfrow=c(2,2)) # View 4 plots at once
+hist(train_data$lead.time, main="Lead Time")
+hist(train_data$average.price, main="Avg Price")
+hist(train_data$number.of.week.nights, main="Week Nights")
+hist(train_data$special.requests, main="Special Requests")
 
 
