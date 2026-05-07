@@ -45,9 +45,16 @@ table(Predicted = val_preds, Actual = actual_values)
 model_summary <- as.data.frame(summary(logit_model)$coefficients)
 colnames(model_summary) <- c("Estimate", "Std_Error", "z_value", "p_value")
 
-# Filter for significant drivers
+# Filter for significant variables
 significant_drivers <- model_summary[model_summary$p_value < 0.05, ]
 print(significant_drivers)
+
+rmse_val <- sqrt(mean((val_probs - val_preds)^2))
+print(rmse_val)
+
+test_error_rate <- mean(val_probs != val_preds)
+print(test_error_rate)
+
 # Random Forest
 # Used ranger instead of randomForest for faster iterations
 library(ranger)
@@ -65,9 +72,10 @@ print(importance_scores)
 barplot(importance_scores, las = 2, main = "Variable Importance (RF)")
 
 rf_preds <- predict(rf_mod, data = test_data)$predictions
+
 # mean(rf_preds != test_data$booking.status)
 
-# Define the range of mtry to test (e.g., from 1 to 10)
+# Define the range of mtry to test from 1 to 10
 # mtry_values <- seq(1, 10, by = 1)
 # oob_errors <- numeric(length(mtry_values))
 # 
@@ -105,12 +113,12 @@ en_preds <- predict(fit_stable, newx = X_test, s = "lambda.min", type = "class")
 # Convert to factor
 en_preds <- factor(en_preds, levels = levels(y_test))
 mean(en_preds != y_test)
-# Plotting the coefficients against the L1 Norm (penalty)
+# Plotting the coefficients against the L1 penalty
 # Extract coefficients at lambda.min
 final_coefs <- coef(fit_stable, s = "lambda.min")
 print(final_coefs)
 
-# GAM
+# GAM UNUSED
 # gam_mod <- gam(booking.status ~ s(lead.time) + s(average.price) +
 #                  type.of.meal + market.segment.type + special.requests,
 #                data = train_data,
