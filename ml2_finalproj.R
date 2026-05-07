@@ -1,15 +1,11 @@
 # TODO
-# Tuning procedures
 # Investigate possible transformations
 # You must evaluate the predictive performance of the competing methods using the held-
 # out test set. Use appropriate regression criteria such as test MSE, RMSE, MAE, or other justified measures.
 
-
-
 dat <- read.csv('booking.csv')
 # Remove booking ID and date of reservation
 hotel_data <- subset(dat, select = -c(Booking_ID, date.of.reservation))
-
 
 # Change characters into factors
 char_indices <- which(sapply(hotel_data, is.character))
@@ -28,7 +24,30 @@ train_indices <- sample(1:n, size = round(0.8 * n))
 train_data <- hotel_data[train_indices, ]
 test_data  <- hotel_data[-train_indices, ]
 
+# Logistic Regression
 
+logit_model <- glm(booking.status ~ ., data = train_data, family = "binomial")
+summary(logit_model)
+
+val_probs <- predict(logit_model, newdata = test_data, type = "response")
+
+# Convert to 1 (Canceled) or 0 (Not Canceled)
+val_preds <- ifelse(val_probs > 0.5, 1, 0)
+
+# Ensure the actual values are also numeric for comparison
+
+actual_values <- ifelse(test_data$booking.status == "Canceled", 1, 0)
+
+table(Predicted = val_preds, Actual = actual_values)
+
+# Extract summary coefficients
+
+model_summary <- as.data.frame(summary(logit_model)$coefficients)
+colnames(model_summary) <- c("Estimate", "Std_Error", "z_value", "p_value")
+
+# Filter for significant drivers
+significant_drivers <- model_summary[model_summary$p_value < 0.05, ]
+print(significant_drivers)
 # Random Forest
 # Used ranger instead of randomForest for faster iterations
 library(ranger)
@@ -66,6 +85,8 @@ rf_preds <- predict(rf_mod, data = test_data)$predictions
 # best_mtry <- mtry_values[which.min(oob_errors)]
 # plot(mtry_values, oob_errors, type = "b", pch = 19, col = "blue",
 #      main = "Tuning mtry via OOB Error")
+
+
 # Elastic Net
 
 X <- model.matrix(booking.status ~ ., data = hotel_data)[, -1]
@@ -89,10 +110,10 @@ mean(en_preds != y_test)
 final_coefs <- coef(fit_stable, s = "lambda.min")
 print(final_coefs)
 
-# # GAM
-# gam_mod <- gam(booking.status ~ s(lead.time) + s(average.price) + 
-#                  type.of.meal + market.segment.type + special.requests, 
-#                data = train_data, 
+# GAM
+# gam_mod <- gam(booking.status ~ s(lead.time) + s(average.price) +
+#                  type.of.meal + market.segment.type + special.requests,
+#                data = train_data,
 #                family = "binomial")
 # 
 # 
@@ -109,14 +130,14 @@ print(final_coefs)
 # 
 # mean(gam_preds != test_data$booking.status)
 
-library(ggplot2)
+# library(ggplot2)
 
-# Boxplot for Lead Time vs Booking Status
-# Plot histograms for your main numeric variables
-par(mfrow=c(2,2)) # View 4 plots at once
-hist(train_data$lead.time, main="Lead Time")
-hist(train_data$average.price, main="Avg Price")
-hist(train_data$number.of.week.nights, main="Week Nights")
-hist(train_data$special.requests, main="Special Requests")
+# # Boxplot for Lead Time vs Booking Status
+# # Plot histograms for your main numeric variables
+# par(mfrow=c(2,2)) # View 4 plots at once
+# hist(train_data$lead.time, main="Lead Time")
+# hist(train_data$average.price, main="Avg Price")
+# hist(train_data$number.of.week.nights, main="Week Nights")
+# hist(train_data$special.requests, main="Special Requests")
 
 
