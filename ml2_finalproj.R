@@ -69,7 +69,15 @@ barplot(importance_scores, las = 2, main = "Variable Importance (RF)")
 
 rf_preds <- predict(rf_mod, data = test_data)$predictions
 
-# mean(rf_preds != test_data$booking.status)
+rf_probs <- rf_preds[, "Canceled"]
+
+# 3. Convert to binary predictions
+rf_preds <- ifelse(rf_probs > 0.5, "Canceled", "Not_Canceled")
+
+# 4. Calculate Test Error Rate
+test_error_rf <- mean(rf_preds != test_data$booking.status)
+
+print(test_error_rf)
 
 # Define the range of mtry to test from 1 to 10
 # mtry_values <- seq(1, 10, by = 1)
