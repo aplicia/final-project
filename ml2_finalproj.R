@@ -33,12 +33,13 @@ val_probs <- predict(logit_model, newdata = test_data, type = "response")
 
 # Convert to 1 (Canceled) or 0 (Not Canceled)
 val_preds <- ifelse(val_probs > 0.5, 1, 0)
-
-# Ensure the actual values are also numeric for comparison
-
 actual_values <- ifelse(test_data$booking.status == "Canceled", 1, 0)
+test_error_rate <- mean(val_preds != actual_values)
+print(test_error_rate)
 
-table(Predicted = val_preds, Actual = actual_values)
+rmse_val <- sqrt(mean((val_probs - val_preds)^2))
+print(rmse_val)
+# table(Predicted = val_preds, Actual = actual_values)
 
 # Extract summary coefficients
 
@@ -49,11 +50,6 @@ colnames(model_summary) <- c("Estimate", "Std_Error", "z_value", "p_value")
 significant_drivers <- model_summary[model_summary$p_value < 0.05, ]
 print(significant_drivers)
 
-rmse_val <- sqrt(mean((val_probs - val_preds)^2))
-print(rmse_val)
-
-test_error_rate <- mean(val_probs != val_preds)
-print(test_error_rate)
 
 # Random Forest
 # Used ranger instead of randomForest for faster iterations
@@ -139,7 +135,6 @@ print(final_coefs)
 # mean(gam_preds != test_data$booking.status)
 
 # library(ggplot2)
-
 # # Boxplot for Lead Time vs Booking Status
 # # Plot histograms for your main numeric variables
 # par(mfrow=c(2,2)) # View 4 plots at once
